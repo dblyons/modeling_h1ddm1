@@ -13,7 +13,8 @@ map with bsmap<br/>
 <br/>
 compute per-base methylation score with bsmap's methratio.py<br/>
 <br/>
-calculate average TE methylation score with my "make_wba_.....sh" script<br/>
+calculate average TE methylation score with <br/>make_wba_from_bsmap_output.sh<br/> 
+  
 <br/>
 massage data in R and shell, producing 2 tables: <br/>
 <br/>
