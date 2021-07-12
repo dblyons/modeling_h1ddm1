@@ -12,8 +12,11 @@ trim-galore<br/>
 map with bsmap<br/>
 <br/>
 compute per-base methylation score with bsmap's methratio.py<br/>
+<br/>
 calculate average TE methylation score with my "make_wba_.....sh" script<br/>
+<br/>
 massage data in R and shell, producing 2 tables: <br/>
+<br/>
 per-TE mCG per genotype and per-TE C+T (alongwith TE length) as coverage proxy<br/>
 <br/><br/>
 processed data is stored in /kingsley_1/3-analysis/bsseq/intermediate_file/<br/>
