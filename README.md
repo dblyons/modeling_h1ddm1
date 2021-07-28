@@ -16,7 +16,7 @@ compute per-base methylation score with bsmap's methratio.py<br/>
 calculate average TE methylation score with <br/>make_wba_from_bsmap_output.sh<br/> 
   
 <br/>
-massage data in R and shell, producing 2 tables: <br/>
+massage data in R using "processing_TEs" scripts and shell, producing 2 tables: <br/>
 <br/>
 per-TE mCG per genotype and per-TE C+T (alongwith TE length) as coverage proxy<br/>
 <br/><br/>
