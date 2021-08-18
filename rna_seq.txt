@@ -1,0 +1,67 @@
+## from the following dir:
+## /kingsley_1/2-mapped-reads/rna_seq/h1ddm1_project
+## mapped using hisat2
+## then switch over to /kingsley_1/3-analysis/rna-seq/stringtie_h1ddm1/july17_assemblies
+
+for i in ./*srt.bam; do stringtie -G /kingsley_1/anno/Araport11_GTF_genes_transposons.Mar202021.gtf -p 6 --fr $i -o /kingsley_1/3-analysis/rna-seq/stringtie_h1ddm1/${i%%srt.bam}assembly.gtf ; done
+
+perl -wpl -i.bak -e 's/srt.//g;' merge.list.july17.txt 
+
+stringtie --merge -p 4 -G /kingsley_1/anno/Araport11_GTF_genes_transposons.Mar202021.gtf -o merged.assembly03.gtf ./merge.list.july17.txt
+
+awk '$3~/transcript/ {print}' merged.assembly03.gtf | bedtools sort -i - > transcripts.merged.assembly03.srt.gtf
+
+bedtools merge -s -i transcripts.merged.assembly03.srt.gtf  | awk 'OFS="\t" {print $1,$2,$3,".",".",$4}' > flattened.transcripts.merged.assembly03.srt.bed
+
+cp flattened.transcripts.merged.assembly03.srt.bed ./july17_assemblies/
+
+cp transcripts.merged.assembly03.srt.gtf ./july17_assemblies/
+
+bedtools map -c 9 -o collapse -null "NA" -a flattened.transcripts.merged.assembly03.srt.bed -b transcripts.merged.assembly03.srt.gtf | awk '{print $0"\t""NR="NR}' > flattened.with.names_col_7_NR_col_8.bed
+
+perl -wnla  -e '$F[3]=~s/./NR=$./g ; print join "\t", @F ;' flattened.transcripts.merged.assembly03.srt.bed > flattened.transcripts.merged.assembly03.for_kallisto.bed
+
+bedtools getfasta -s -fi /kingsley_1/bismark_genome/TAIR10.fa -bed flattened.transcripts.merged.assembly03.for_kallisto.bed > flattened.transcripts.merged.assembly03.for_kallisto.fa
+
+# kallisto index lives at
+# ~/kallisto_index/
+
+kallisto index -i stringtie.h1ddm1 flattened.transcripts.merged.assembly03.for_kallisto.fa
+
+# from /kingsley_1/1-trimmed-reads/rna-seq
+
+for i in ./*fastq; do kallisto quant --single --fr-stranded -b 100 -l 320 -s 30 -i ~/kallisto_index/stringtie.h1ddm1.idx  $i -o /kingsley_1/3-analysis/rna-seq/${i%%fastq}out; done
+
+### mv these to /kingsley_1/3-analysis/rna-seq/july_17_kallisto
+### then rename 
+## wt = sampleA, C; h1=D,E,F; ddm1=..., h1ddm1...
+
+## then can upload to R using kallisto.R
+
+## get those transcripts going up in ddm1 v WT
+## then see whether they are TE-like
+## by writing kallisto output to file and then sorting 
+## transcripts >2.5 TPM (1st quartile of ddm1 exp all transcripts)
+## and qval <0.05
+## in directory 
+## /kingsley_1/3-analysis/rna-seq/stringtie_h1ddm1/july17_assemblies
+
+awk '$1<0.05 {print}' ddm1.v.wt.exp.table.txt  | perl -wnla -e '$F[2]>$F[3] and print;' | awk '$3>2.5 {print}' | awk '{print $2}' | perl -wpl -e 's/:/\t/;'  | perl -wpl -e 's/-/\t/;' | perl -wpl -e 's/\((.)\)/\t$1/g;'  | awk 'OFS="\t" {print $1,$2,$3,"1",".",$4}'  |  bedtools sort -i  - > sigUp.ddm1.gt_2.5_tpm.bed
+
+# attach NR number connecting the transcripts to their gene IDs
+# -a file is in the above dir ../july17...
+bedtools intersect -wo -f  0.99 -r -a flattened.transcripts.merged.assembly03.for_kallisto.bed -b sigUp.ddm1.gt_2.5_tpm.bed  | awk '$2==$8 {print}' | awk 'OFS="\t" {print $1,$2,$3,$4,1,$6}' > sigUp.ddm1.gt_2.5_tpm.withNR.bed
+
+# get mC for transcripts
+bedtools map -c 6 -o mean -null "NA" -a flattened.transcripts.merged.assembly03.for_kallisto.bed -b /kingsley_1/3-analysis/bsseq/wt.f3_1.dzdl31a.methratio.cg.gff | bedtools map -c 6 -o mean -null "NA" -a - -b /kingsley_1/3-analysis/bsseq/chg/wt.f3.dzdl31a.chg.gff | bedtools map -c 6 -o mean -null "NA" -a - -b /kingsley_1/3-analysis/bsseq/chh/wt.f3.dzdl31a.chh.gff > wt.meth.at.stringtie.3context.bed
+
+# make mk9 and dk9 scores per element
+ bigWigAverageOverBed /kingsley_1/bw_and_tdf/wt_mk9.dzdl50.bw sigUp.ddm1.gt_2.5_tpm.withNR.bed out.tab -bedOut=sigUp.w_mk9.bed
+
+bigWigAverageOverBed /kingsley_1/bw_and_tdf/wt_dk9.dzdl50.bw sigUp.ddm1.gt_2.5_tpm.withNR.bed out.tab -bedOut=sigUp.w_dk9.bed
+
+# combine k9 meth to one file
+paste sigUp.w_mk9.bed sigUp.w_dk9.bed | awk 'OFS="\t" {print $1,$2,$3,$4,$5,$6,$7,$14}' > sigUp.with.wt_mk9_and_Dk9.bed
+
+# tack on mk9 and dk9
+bedtools intersect -wo -f 0.99 -r -a sigUp.with.wt_mk9_and_Dk9.bed -b wt.meth.at.stringtie.3context.bed | perl -wnla -e 'print join "\t", @F[0..7],@F[14..16];' > sigUp.in.ddm1.mk9.dk9.mcg.mchg.mchh.bed
