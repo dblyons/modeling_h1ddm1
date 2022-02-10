@@ -1,6 +1,6 @@
 # modeling_h1ddm1
 <br/>
-bsseq processing from<br/>
+bisulfite sequencing processing from<br/>
 raw fastq to window-by-annotation style output<br/>
 <br/>
 steps:<br/><br/>
