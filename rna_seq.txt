@@ -1,13 +1,13 @@
-## from the following dir:
-## /kingsley_1/2-mapped-reads/rna_seq/h1ddm1_project
-## mapped using hisat2
-## then switch over to /kingsley_1/3-analysis/rna-seq/stringtie_h1ddm1/july17_assemblies
 
-for i in ./*srt.bam; do stringtie -G /kingsley_1/anno/Araport11_GTF_genes_transposons.Mar202021.gtf -p 6 --fr $i -o /kingsley_1/3-analysis/rna-seq/stringtie_h1ddm1/${i%%srt.bam}assembly.gtf ; done
+## mapped using hisat2 >> *srt.bam files
 
-perl -wpl -i.bak -e 's/srt.//g;' merge.list.july17.txt 
+# make per replicate assembly
+for i in ./*srt.bam; do stringtie -G Araport11_GTF_genes_transposons.Mar202021.gtf -p 6 --fr $i -o ${i%%srt.bam}assembly.gtf ; done
 
-stringtie --merge -p 4 -G /kingsley_1/anno/Araport11_GTF_genes_transposons.Mar202021.gtf -o merged.assembly03.gtf ./merge.list.july17.txt
+# merge different replicates and genotypes
+# put names into list such as merge.list.july17.txt 
+
+stringtie --merge -p 4 -G Araport11_GTF_genes_transposons.Mar202021.gtf -o merged.assembly03.gtf ./merge.list.july17.txt
 
 awk '$3~/transcript/ {print}' merged.assembly03.gtf | bedtools sort -i - > transcripts.merged.assembly03.srt.gtf
 
@@ -32,8 +32,7 @@ kallisto index -i stringtie.h1ddm1 flattened.transcripts.merged.assembly03.for_k
 
 for i in ./*fastq; do kallisto quant --single --fr-stranded -b 100 -l 320 -s 30 -i ~/kallisto_index/stringtie.h1ddm1.idx  $i -o /kingsley_1/3-analysis/rna-seq/${i%%fastq}out; done
 
-### mv these to /kingsley_1/3-analysis/rna-seq/july_17_kallisto
-### then rename 
+###  rename kallisto output
 ## wt = sampleA, C; h1=D,E,F; ddm1=..., h1ddm1...
 
 ## then can upload to R using kallisto.R
@@ -43,8 +42,7 @@ for i in ./*fastq; do kallisto quant --single --fr-stranded -b 100 -l 320 -s 30 
 ## by writing kallisto output to file and then sorting 
 ## transcripts >2.5 TPM (1st quartile of ddm1 exp all transcripts)
 ## and qval <0.05
-## in directory 
-## /kingsley_1/3-analysis/rna-seq/stringtie_h1ddm1/july17_assemblies
+
 
 awk '$1<0.05 {print}' ddm1.v.wt.exp.table.txt  | perl -wnla -e '$F[2]>$F[3] and print;' | awk '$3>2.5 {print}' | awk '{print $2}' | perl -wpl -e 's/:/\t/;'  | perl -wpl -e 's/-/\t/;' | perl -wpl -e 's/\((.)\)/\t$1/g;'  | awk 'OFS="\t" {print $1,$2,$3,"1",".",$4}'  |  bedtools sort -i  - > sigUp.ddm1.gt_2.5_tpm.bed
 
