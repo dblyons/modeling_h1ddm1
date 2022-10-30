@@ -5,8 +5,9 @@
 ## printing square table of all hetero TEs to disk
 ## whereby you remove those TEs with any "NA" (which are TEs with no coverage)
 ## using grep -v "NA" in > out
+## wba = window by anno
 
-filenames<-list.files("/kingsley_1/3-analysis/bsseq/intermediate_file/",
+filenames<-list.files("/path/to/wba",
                       pattern='wba$', full.names = TRUE)
 
 h1 <- lapply(filenames, read.table)
@@ -36,5 +37,5 @@ together<-data.frame(id=h1[[1]][,9],  together)
 #######
 #remove those TEs in which there is no cov for one or more samples
 ######
-write.table(together, "/kingsley_1/3-analysis/bsseq/intermediate_file/tmp/unfilt.htes.wba", sep="\t", 
+write.table(together, "unfilt.htes.wba", sep="\t", 
             row.names=FALSE, col.names=TRUE, quote=FALSE)
