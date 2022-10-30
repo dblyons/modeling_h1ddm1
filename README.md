@@ -20,8 +20,6 @@ massage data in R using "processing_TEs" scripts and shell, producing 2 tables: 
 <br/>
 per-TE mCG per genotype and per-TE C+T (alongwith TE length) as coverage proxy<br/>
 <br/><br/>
-processed data is stored in /kingsley_1/3-analysis/bsseq/intermediate_file/<br/>
-and backed up locally in /suboord_kingsley/backup_kingsley_1/3-analysis/bsseq/intermediate_file<br/>
 
 
 
